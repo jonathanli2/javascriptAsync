@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { onErrorResumeNext } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +13,7 @@ export class AppComponent {
     const that = this;
     this.buildTheWorld(
       (r) => {
-        that.buildTheHome(r, 
+        that.buildTheHome(r,
           // tslint:disable-next-line: only-arrow-functions
           (room) => {
             console.log('My new home has ' + room + ' rooms');
@@ -116,5 +116,59 @@ export class AppComponent {
     }
   }
 
+   observableTest() {
+      this.buildTheWorldPObservable().subscribe(
+        {
+          next: (r) =>  {
+            console.log('world is built');
+            this.buildTheHomeObservable(r)
+              .subscribe({
+                next: (room) => {console.log('home build success with ' + room + ' rooms'); },
+                error: e => { console.log('home build failed ' + e); }
+              });
+          },
+          error: (e) => {
+            console.log('world build failed ' + e);
+          }
+        });
+   }
+
+   buildTheWorldPObservable(): Observable<any> {
+    const o = new Observable( observer => {
+      setTimeout( () => {
+        const r = Math.random();
+        if (r > 0.5) {
+          console.log('build world successful');
+          observer.next(r);
+        } else {
+          console.log('build world failed');
+          observer.error('world is falling');
+        }
+      }, 3000);
+    });
+    return o;
+  }
+
+
+  buildTheHomeObservable(r): Observable<any> {
+    const o = new Observable((observer) => {
+      let bContinue = true;
+      while (bContinue) {
+        setTimeout( () => {
+          const s = Math.random();
+          if (s > 0.5) {
+            const room = r * 10;
+            console.log('build home successful');
+            observer.next(room);
+          } else {
+            console.log('build home failed');
+            observer.error('home is falling');
+            bContinue = false;
+          }
+        }, 3000);
+      }
+    });
+    return o;
+  }
 
 }
